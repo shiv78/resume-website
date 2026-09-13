@@ -283,6 +283,13 @@ img { max-width: 100%; display: block; }
   text-align: center;
   position: relative;
   z-index: 1;
+  pointer-events: none;
+}
+
+.hero-content a,
+.hero-content button,
+.hero-content .cert-badge {
+  pointer-events: auto;
 }
 
 .hero-terminal-tag {
