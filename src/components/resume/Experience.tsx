@@ -1,3 +1,9 @@
+import { useEffect, useRef } from 'react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
+
 interface Project {
   name: string
   bullets: string[]
@@ -111,15 +117,94 @@ const roles: Role[] = [
 ]
 
 export default function Experience() {
+  const sectionRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Animate the timeline line drawing
+      gsap.fromTo('.timeline::before', {
+        scaleY: 0,
+      }, {
+        scaleY: 1,
+        scrollTrigger: {
+          trigger: '.timeline',
+          start: 'top 80%',
+          end: 'bottom 20%',
+          scrub: 1,
+        },
+      })
+
+      // Animate each timeline item
+      gsap.utils.toArray<HTMLElement>('.timeline-item').forEach((item) => {
+        // Dot pulse
+        const dot = item.querySelector('.timeline-dot')
+        gsap.from(dot, {
+          scrollTrigger: {
+            trigger: item,
+            start: 'top 80%',
+          },
+          scale: 0,
+          duration: 0.5,
+          ease: 'back.out(2)',
+        })
+
+        // Card slide in
+        gsap.from(item, {
+          scrollTrigger: {
+            trigger: item,
+            start: 'top 80%',
+          },
+          x: -60,
+          opacity: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          delay: 0.1,
+        })
+
+        // Project cards stagger
+        const projects = item.querySelectorAll('.timeline-project')
+        gsap.from(projects, {
+          scrollTrigger: {
+            trigger: item,
+            start: 'top 75%',
+          },
+          y: 30,
+          opacity: 0,
+          duration: 0.6,
+          stagger: 0.2,
+          ease: 'power3.out',
+          delay: 0.3,
+        })
+
+        // Bullets cascade
+        const bullets = item.querySelectorAll('.timeline-bullets li')
+        gsap.from(bullets, {
+          scrollTrigger: {
+            trigger: item,
+            start: 'top 70%',
+          },
+          x: -30,
+          opacity: 0,
+          duration: 0.4,
+          stagger: 0.06,
+          ease: 'power2.out',
+          delay: 0.5,
+        })
+      })
+    }, sectionRef)
+
+    return () => ctx.revert()
+  }, [])
+
   return (
-    <section id="experience" className="section">
+    <section id="experience" className="section" ref={sectionRef}>
       <div className="reveal">
         <div className="section-label">experience</div>
         <h2 className="section-title">Professional Experience</h2>
       </div>
       <div className="timeline">
         {roles.map((role, i) => (
-          <div className="timeline-item reveal" key={i}>
+          <div className="timeline-item" key={i}>
             <div className="timeline-dot" />
             <div className="timeline-header">
               <div className="timeline-company">{role.company}</div>

@@ -1,4 +1,7 @@
 import { useEffect } from 'react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import CustomCursor from './components/resume/CustomCursor'
 import Navbar from './components/resume/Navbar'
 import Hero from './components/resume/Hero'
 import About from './components/resume/About'
@@ -7,6 +10,8 @@ import Skills from './components/resume/Skills'
 import Experience from './components/resume/Experience'
 import Education from './components/resume/Education'
 import Contact from './components/resume/Contact'
+
+gsap.registerPlugin(ScrollTrigger)
 
 function useScrollReveal() {
   useEffect(() => {
@@ -31,8 +36,26 @@ function useScrollReveal() {
 export default function App() {
   useScrollReveal()
 
+  // Smooth parallax on section dividers
+  useEffect(() => {
+    gsap.utils.toArray<HTMLElement>('.section-divider').forEach(divider => {
+      gsap.fromTo(divider, {
+        scaleX: 0,
+      }, {
+        scaleX: 1,
+        scrollTrigger: {
+          trigger: divider,
+          start: 'top 90%',
+          end: 'top 60%',
+          scrub: 1,
+        },
+      })
+    })
+  }, [])
+
   return (
     <>
+      <CustomCursor />
       <Navbar />
       <Hero />
       <hr className="section-divider" />
@@ -48,7 +71,7 @@ export default function App() {
       <hr className="section-divider" />
       <Contact />
       <footer className="footer">
-        <span>$ echo &quot;Built with React + Vite&quot;</span>
+        <span>$ echo &quot;Built with React + Vite + GSAP&quot;</span>
       </footer>
     </>
   )
