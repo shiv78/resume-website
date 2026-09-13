@@ -1,8 +1,5 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-gsap.registerPlugin(ScrollTrigger)
 
 const skillGroups = [
   {
@@ -47,48 +44,41 @@ const skillGroups = [
   },
 ]
 
-export default function Skills() {
-  const sectionRef = useRef<HTMLElement>(null)
+function SkillGroupCard({ group }: { group: typeof skillGroups[0] }) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const animated = useRef(false)
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Animate each skill group
-      gsap.utils.toArray<HTMLElement>('.skill-group').forEach((group, i) => {
-        gsap.from(group, {
-          scrollTrigger: {
-            trigger: group,
-            start: 'top 85%',
-          },
-          x: i % 2 === 0 ? -80 : 80,
-          opacity: 0,
-          duration: 0.7,
-          ease: 'power3.out',
-        })
+    const card = cardRef.current
+    if (!card) return
 
-        // Cascade tags inside each group
-        const tags = group.querySelectorAll('.skill-tag')
-        gsap.from(tags, {
-          scrollTrigger: {
-            trigger: group,
-            start: 'top 85%',
-          },
-          scale: 0,
-          opacity: 0,
-          duration: 0.4,
-          stagger: 0.04,
-          ease: 'back.out(1.7)',
-          delay: 0.3,
-        })
-      })
-    }, sectionRef)
+    // IntersectionObserver guarantees reliable animation trigger
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !animated.current) {
+          animated.current = true
+          const tags = card.querySelectorAll<HTMLElement>('.skill-tag')
+          gsap.fromTo(
+            tags,
+            { scale: 0.7, opacity: 0, y: 15 },
+            {
+              scale: 1,
+              opacity: 1,
+              y: 0,
+              duration: 0.45,
+              stagger: 0.03,
+              ease: 'back.out(1.8)',
+            }
+          )
+        }
+      },
+      { threshold: 0.15 }
+    )
 
-    return () => ctx.revert()
-  }, [])
+    observer.observe(card)
 
-  // Magnetic hover effect on skill tags
-  useEffect(() => {
-    const tags = document.querySelectorAll<HTMLElement>('.skill-tag')
-
+    // Interactive magnetic hover effect for skill tags
+    const tags = card.querySelectorAll<HTMLElement>('.skill-tag')
     const handleMove = (e: MouseEvent) => {
       const tag = e.currentTarget as HTMLElement
       const rect = tag.getBoundingClientRect()
@@ -96,10 +86,10 @@ export default function Skills() {
       const y = e.clientY - rect.top - rect.height / 2
 
       gsap.to(tag, {
-        x: x * 0.3,
-        y: y * 0.3,
-        scale: 1.15,
-        duration: 0.3,
+        x: x * 0.35,
+        y: y * 0.35,
+        scale: 1.12,
+        duration: 0.25,
         ease: 'power2.out',
       })
     }
@@ -120,6 +110,7 @@ export default function Skills() {
     })
 
     return () => {
+      observer.disconnect()
       tags.forEach(tag => {
         tag.removeEventListener('mousemove', handleMove)
         tag.removeEventListener('mouseleave', handleLeave)
@@ -128,21 +119,27 @@ export default function Skills() {
   }, [])
 
   return (
-    <section id="skills" className="section" ref={sectionRef}>
+    <div className="skill-group" ref={cardRef}>
+      <div className="skill-group-title">// {group.title}</div>
+      <div className="skill-tags">
+        {group.skills.map((s, j) => (
+          <span className="skill-tag" key={j}>{s}</span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function Skills() {
+  return (
+    <section id="skills" className="section">
       <div className="reveal">
         <div className="section-label">skills</div>
         <h2 className="section-title">Technical Skills</h2>
       </div>
       <div className="skills-groups">
         {skillGroups.map((g, i) => (
-          <div className="skill-group" key={i}>
-            <div className="skill-group-title">// {g.title}</div>
-            <div className="skill-tags">
-              {g.skills.map((s, j) => (
-                <span className="skill-tag" key={j}>{s}</span>
-              ))}
-            </div>
-          </div>
+          <SkillGroupCard key={i} group={g} />
         ))}
       </div>
     </section>

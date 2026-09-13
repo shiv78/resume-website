@@ -1,33 +1,34 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-gsap.registerPlugin(ScrollTrigger)
 
 export default function Contact() {
-  const sectionRef = useRef<HTMLElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from('.contact-content > *', {
-        scrollTrigger: {
-          trigger: '.contact-content',
-          start: 'top 80%',
-        },
-        y: 40,
-        opacity: 0,
-        duration: 0.6,
-        stagger: 0.15,
-        ease: 'power3.out',
-      })
-    }, sectionRef)
+    const el = contentRef.current
+    if (!el) return
 
-    return () => ctx.revert()
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          gsap.fromTo(
+            el.children,
+            { y: 25, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: 'power3.out' }
+          )
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.2 }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
   }, [])
 
   return (
-    <section id="contact" className="section" ref={sectionRef}>
-      <div className="contact-content">
+    <section id="contact" className="section">
+      <div className="contact-content" ref={contentRef}>
         <div className="section-label" style={{ justifyContent: 'center' }}>contact</div>
         <h2 className="section-title" style={{ textAlign: 'center' }}>Get In Touch</h2>
         <div className="contact-items">

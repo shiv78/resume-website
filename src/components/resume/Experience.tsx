@@ -1,8 +1,5 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-gsap.registerPlugin(ScrollTrigger)
 
 interface Project {
   name: string
@@ -116,112 +113,64 @@ const roles: Role[] = [
   },
 ]
 
-export default function Experience() {
-  const sectionRef = useRef<HTMLElement>(null)
+function TimelineCard({ role }: { role: Role }) {
+  const itemRef = useRef<HTMLDivElement>(null)
+  const animated = useRef(false)
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Animate the timeline line drawing
-      gsap.fromTo('.timeline::before', {
-        scaleY: 0,
-      }, {
-        scaleY: 1,
-        scrollTrigger: {
-          trigger: '.timeline',
-          start: 'top 80%',
-          end: 'bottom 20%',
-          scrub: 1,
-        },
-      })
+    const item = itemRef.current
+    if (!item) return
 
-      // Animate each timeline item
-      gsap.utils.toArray<HTMLElement>('.timeline-item').forEach((item) => {
-        // Dot pulse
-        const dot = item.querySelector('.timeline-dot')
-        gsap.from(dot, {
-          scrollTrigger: {
-            trigger: item,
-            start: 'top 80%',
-          },
-          scale: 0,
-          duration: 0.5,
-          ease: 'back.out(2)',
-        })
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !animated.current) {
+          animated.current = true
+          gsap.fromTo(
+            item,
+            { x: -30, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }
+          )
+        }
+      },
+      { threshold: 0.15 }
+    )
 
-        // Card slide in
-        gsap.from(item, {
-          scrollTrigger: {
-            trigger: item,
-            start: 'top 80%',
-          },
-          x: -60,
-          opacity: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          delay: 0.1,
-        })
-
-        // Project cards stagger
-        const projects = item.querySelectorAll('.timeline-project')
-        gsap.from(projects, {
-          scrollTrigger: {
-            trigger: item,
-            start: 'top 75%',
-          },
-          y: 30,
-          opacity: 0,
-          duration: 0.6,
-          stagger: 0.2,
-          ease: 'power3.out',
-          delay: 0.3,
-        })
-
-        // Bullets cascade
-        const bullets = item.querySelectorAll('.timeline-bullets li')
-        gsap.from(bullets, {
-          scrollTrigger: {
-            trigger: item,
-            start: 'top 70%',
-          },
-          x: -30,
-          opacity: 0,
-          duration: 0.4,
-          stagger: 0.06,
-          ease: 'power2.out',
-          delay: 0.5,
-        })
-      })
-    }, sectionRef)
-
-    return () => ctx.revert()
+    observer.observe(item)
+    return () => observer.disconnect()
   }, [])
 
   return (
-    <section id="experience" className="section" ref={sectionRef}>
+    <div className="timeline-item" ref={itemRef}>
+      <div className="timeline-dot" />
+      <div className="timeline-header">
+        <div className="timeline-company">{role.company}</div>
+        <div className="timeline-role">{role.role}</div>
+        <div className="timeline-period">{role.period} · {role.location}</div>
+      </div>
+      {role.projects.map((proj, j) => (
+        <div className="timeline-project" key={j}>
+          <div className="timeline-project-name">{proj.name}</div>
+          <ul className="timeline-bullets">
+            {proj.bullets.map((b, k) => (
+              <li key={k}>{b}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export default function Experience() {
+  return (
+    <section id="experience" className="section">
       <div className="reveal">
         <div className="section-label">experience</div>
         <h2 className="section-title">Professional Experience</h2>
       </div>
       <div className="timeline">
         {roles.map((role, i) => (
-          <div className="timeline-item" key={i}>
-            <div className="timeline-dot" />
-            <div className="timeline-header">
-              <div className="timeline-company">{role.company}</div>
-              <div className="timeline-role">{role.role}</div>
-              <div className="timeline-period">{role.period} · {role.location}</div>
-            </div>
-            {role.projects.map((proj, j) => (
-              <div className="timeline-project" key={j}>
-                <div className="timeline-project-name">{proj.name}</div>
-                <ul className="timeline-bullets">
-                  {proj.bullets.map((b, k) => (
-                    <li key={k}>{b}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          <TimelineCard key={i} role={role} />
         ))}
       </div>
     </section>
